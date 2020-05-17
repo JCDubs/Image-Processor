@@ -1,0 +1,107 @@
+service: Image-Processor
+
+plugins:
+  - serverless-offline
+  - serverless-s3-local
+  - serverless-plugin-existing-s3
+
+functions:
+  processImage:
+    handler: src/handler/handler.processImage
+    events:
+      - existingS3:
+          bucket: ${self:custom.s3.imageSandboxBucketName.${opt:stage, 'test'}}
+          events:
+            - s3:ObjectCreated:*
+
+package:
+  individually: true
+  exclude:
+    - test/**
+  include:
+    - src/**
+  excludeDevDependencies: true
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'test'}
+  region: ${opt:region, 'eu-west-1'}
+  timeout: 60
+  logRetentionInDays: 5
+  deploymentBucket:
+    name: ${self:custom.deploymentBucket.${self:provider.stage}}
+    serverSideEncryption: AES256
+  environment:
+    IMAGE_SANDBOX_BUCKET: ${self:custom.s3.imageSandboxBucketName.${self:provider.stage}}
+    SITE_IMAGES_BUCKET: ${self:custom.s3.imageSiteBucketName.${self:provider.stage}}
+    ENV: ${self:custom.env.${self:provider.stage}}
+    VERSION: ${file(./package.json):version}
+  versionFunctions: true
+  endpointType: regional
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:GetObject"
+        - "s3:PutObject"
+        - "s3:ListBucket"
+      Resource: "arn:aws:s3:::${self:custom.deploymentBucket.${self:provider.stage}}/*"
+    - Effect: "Allow"
+      Action:
+        - "s3:GetObject"
+        - "s3:PutObject"
+        - "s3:ListBucket"
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::${self:custom.s3.imageSiteBucketName.${self:provider.stage}}/*"
+    - Effect: "Allow"
+      Action:
+        - "s3:GetObject"
+        - "s3:GetObjects"
+        - "s3:ListBucket"
+      Resource: "arn:aws:s3:::${self:custom.s3.imageSandboxBucketName.${self:provider.stage}}/*"
+
+  stackTags:
+    environment: ${self:provider.stage}
+    application: ${self:service}
+    product: ImageProcessor
+
+custom:
+  s3:
+    host: 0.0.0.0
+    port: 8001
+    imageSandboxBucketName:
+      dev: "image-sandbox-dev"
+      test: "image-sandbox-test"
+      prod: "image-sandbox-prod"
+    imageSiteBucketName:
+      dev: "site-images-dev"
+      test: "site-images-test"
+      prod: "site-images-prod"
+  env:
+    dev: "dev"
+    test: "test"
+    prod: "prod"
+  deploymentBucket:
+    dev: image-processor-deploy
+    test: image-processor-deploy
+    prod: image-processor-deploy
+
+resources:
+  Conditions:
+    IsDev:
+      Fn::Equals:
+        - ${opt:stage}
+        - dev
+  Resources:
+    imageSandboxBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.s3.imageSandboxBucketName.${self:provider.stage}}
+      Condition: IsDev
+    imageSiteBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.s3.imageSiteBucketName.${self:provider.stage}}
+      Condition: IsDev

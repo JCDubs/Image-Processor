@@ -1,0 +1,21 @@
+{
+    "env": {
+        "browser": false,
+        "node": true,
+        "es6": true
+    },
+    "extends": ["eslint:recommended", "plugin:sonarjs/recommended"],
+    "globals": {
+        "Atomics": "readonly",
+        "SharedArrayBuffer": "readonly"
+    },
+    "parserOptions": {
+        "ecmaVersion": 2018,
+        "sourceType": "module"
+    },
+    "rules": {
+        "no-undef": "off",
+        "no-console": "off"
+    },
+    "plugins": ["sonarjs", "html"]
+}

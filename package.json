@@ -1,0 +1,98 @@
+{
+  "name": "image-processor",
+  "version": "1.0.0",
+  "description": "AWS Lambda to convert and resize images.",
+  "main": "index.js",
+  "author": "Jason Conway-Williams",
+  "license": "ISC",
+  "scripts": {
+    "test": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=json --reporter=cobertura --reporter=text mocha 'test/unit/**/*.spec.js' --require babel-polyfill --require babel-register --recursive",
+    "test-report": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text mocha 'test/**/*.spec.js' --require babel-polyfill --require babel-register --recursive",
+    "lint": "node_modules/.bin/eslint -f json -o report.json .",
+    "lint-html": "node_modules/.bin/eslint -f html -o lint.html .",
+    "serve": "S3_HOST=0.0.0.0 S3_PORT=8001 ENV=dev sls offline -s dev",
+    "upload-canned": "aws s3 sync canned-data/images s3://image-sandbox-dev/banner --endpoint http://localhost:8001",
+    "delete-canned": "aws s3 rm s3://image-sandbox-dev/banner/LARGE_elevation.jpg --endpoint http://localhost:8001 && aws s3 rm s3://image-sandbox-dev/banner/map.png --endpoint http://localhost:8001",
+    "debug": "export DEBUG=* && export SLS_DEBUG=* && node --inspect-brk ./node_modules/.bin/serverless offline -s dev",
+    "integration": "ENV=dev ./bin/run_integration.sh",
+    "cucumber": "./node_modules/.bin/cucumber-js --format json:cucumber.json test/integration/features",
+    "deploy:test": "sls deploy -s test",
+    "deploy:prod": "sls deploy -s prod"
+  },
+  "devDependencies": {
+    "apickli": "^2.1.0",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-plugin-istanbul": "^4.1.6",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-register": "^6.26.0",
+    "chai": "^4.2.0",
+    "chai-match": "^1.1.1",
+    "cross-env": "^5.1.4",
+    "cucumber": "^4.2.1",
+    "cucumber-junit": "^1.7.1",
+    "eslint": "^5.15.1",
+    "eslint-plugin-html": "^5.0.3",
+    "eslint-plugin-sonarjs": "^0.3.0",
+    "mocha": "^6.0.2",
+    "nodemon": "^1.18.10",
+    "nyc": "^11.6.0",
+    "serverless": "^1.40.0",
+    "serverless-offline": "^4.7.1",
+    "serverless-plugin-existing-s3": "^2.4.0",
+    "serverless-s3-local": "^0.3.23",
+    "sinon": "^7.2.7"
+  },
+  "eslintIgnore": [
+    "*.spec.js",
+    "coverage"
+  ],
+  "babel": {
+    "presets": [
+      "env"
+    ],
+    "env": {
+      "test": {
+        "plugins": [
+          "istanbul"
+        ]
+      }
+    }
+  },
+  "nyc": {
+    "require": [
+      "babel-register"
+    ],
+    "sourceMap": false,
+    "instrument": false,
+    "exclude": [
+      "test/*"
+    ],
+    "reporter": [
+      "lcov",
+      "text-summary"
+    ],
+    "watermarks": {
+      "lines": [
+        80,
+        95
+      ],
+      "functions": [
+        80,
+        95
+      ],
+      "branches": [
+        80,
+        95
+      ],
+      "statements": [
+        80,
+        95
+      ]
+    }
+  },
+  "dependencies": {
+    "sharp": "^0.25.2"
+  }
+}

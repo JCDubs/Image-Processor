@@ -1,0 +1,15 @@
+node_modules
+jspm_packages
+.serverless
+.scannerwork
+.nyc_output
+coverage
+report.json
+*-error.log
+cucumber.json
+*.log
+.DS_Store
+lint.html
+.webpack
+buckets
+package-lock.json
